@@ -1,0 +1,30 @@
+name: "Yandex Cloud S3 Sync"
+description: "Deploy static website to Yandex Object Storage"
+author: "Pavel Sergeev"
+inputs:
+  YANDEX_CLOUD_ACCESS_KEY_ID:
+    description: "Service account access key id"
+    default: ""
+    required: true
+  YANDEX_CLOUD_SECRET_ACCESS_KEY:
+    description: "Service account secret access key"
+    default: ""
+    required: true
+  YANDEX_CLOUD_BUCKET_NAME:
+    description: "Bucket name"
+    default: ""
+    required: true
+  PATH:
+    description: "Path to upload folder"
+    default: ""
+    required: true
+  CLEAR:
+    description: "Clear bucket before deploy"
+    default: "false"
+    required: false
+runs:
+  using: "node16"
+  main: "dist/index.js"
+branding:
+  icon: "cloud"
+  color: "blue"
