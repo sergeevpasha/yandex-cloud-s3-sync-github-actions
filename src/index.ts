@@ -3,6 +3,7 @@ import AWS from 'aws-sdk';
 import fs, { Dirent } from 'fs';
 import * as path from 'path';
 import { Object as S3Object } from 'aws-sdk/clients/s3';
+import mime from 'mime-types';
 
 const YANDEX_CLOUD_ENDPOINT = 'https://storage.yandexcloud.net';
 
@@ -64,11 +65,14 @@ async function uploadData(s3Path: string, bucketName: string) {
     }
 
     for await (const filePath of getFiles(s3Path)) {
+        const ContentType = mime.lookup(filePath) || 'text/plain';
+
         await s3
             .putObject({
                 Key: path.relative(s3Path, filePath),
                 Bucket: bucketName,
-                Body: fs.createReadStream(filePath)
+                Body: fs.createReadStream(filePath),
+                ContentType
             })
             .promise();
     }

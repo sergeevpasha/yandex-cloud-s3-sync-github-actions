@@ -12,9 +12,11 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.9.1",
-    "aws-sdk": "^2.1204.0"
+    "aws-sdk": "^2.1204.0",
+    "mime-types": "^2.1.35"
   },
   "devDependencies": {
+    "@types/mime-types": "^2.1.1",
     "@types/node": "^18.7.13",
     "@typescript-eslint/eslint-plugin": "^5.35.1",
     "@vercel/ncc": "^0.34.0",
