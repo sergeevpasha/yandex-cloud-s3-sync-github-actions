@@ -49,6 +49,7 @@ jobs:
                 YANDEX_CLOUD_ACCESS_KEY_ID: ${{ secrets.YANDEX_CLOUD_ACCESS_KEY_ID }}
                 YANDEX_CLOUD_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_CLOUD_SECRET_ACCESS_KEY }}
                 YANDEX_CLOUD_BUCKET_NAME: ${{ secrets.YANDEX_CLOUD_BUCKET_NAME }}
+                YANDEX_CLOUD_REGION: ${{ secrets.YANDEX_CLOUD_REGION }}
                 PATH: "./dist"
                 CLEAR: true
 

@@ -1,17 +1,18 @@
 import * as core from '@actions/core';
-import AWS from 'aws-sdk';
 import fs, { Dirent } from 'fs';
 import * as path from 'path';
-import { Object as S3Object } from 'aws-sdk/clients/s3';
 import mime from 'mime-types';
+import { _Object as S3Object, S3 } from '@aws-sdk/client-s3';
 
 const YANDEX_CLOUD_ENDPOINT = 'https://storage.yandexcloud.net';
+const YANDEX_CLOUD_REGION = 'ru-central1-a';
 
 type GithubActionInput = {
     accessKeyId: string;
     secretAccessKey: string;
     bucketName: string;
     path: string;
+    region: string;
     clear: boolean;
 };
 
@@ -22,17 +23,21 @@ const inputs: GithubActionInput = {
     secretAccessKey: core.getInput('YANDEX_CLOUD_SECRET_ACCESS_KEY', { required: true }),
     bucketName: core.getInput('YANDEX_CLOUD_BUCKET_NAME', { required: true }),
     path: core.getInput('path', { required: true }),
+    region: core.getInput('YANDEX_CLOUD_REGION', { required: false }),
     clear: convertStringToBoolean(core.getInput('clear', { required: false }))
 };
 
-const s3 = new AWS.S3({
+const s3 = new S3({
     endpoint: YANDEX_CLOUD_ENDPOINT,
-    accessKeyId: inputs.accessKeyId,
-    secretAccessKey: inputs.secretAccessKey
+    credentials: {
+        accessKeyId: inputs.accessKeyId,
+        secretAccessKey: inputs.secretAccessKey
+    },
+    region: inputs.region || YANDEX_CLOUD_REGION
 });
 
 const emptyS3Bucket = async (bucket: string) => {
-    const listedObjects = await s3.listObjects({ Bucket: bucket }).promise();
+    const listedObjects = await s3.listObjects({ Bucket: bucket });
 
     if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
         return;
@@ -40,7 +45,7 @@ const emptyS3Bucket = async (bucket: string) => {
 
     const deleteKeys = listedObjects.Contents.map((c: S3Object) => ({ Key: c.Key as string }));
 
-    await s3.deleteObjects({ Bucket: bucket, Delete: { Objects: deleteKeys } }).promise();
+    await s3.deleteObjects({ Bucket: bucket, Delete: { Objects: deleteKeys } });
 
     if (listedObjects.IsTruncated) {
         await emptyS3Bucket(bucket);
@@ -67,14 +72,12 @@ async function uploadData(s3Path: string, bucketName: string) {
     for await (const filePath of getFiles(s3Path)) {
         const ContentType = mime.lookup(filePath) || 'text/plain';
 
-        await s3
-            .putObject({
-                Key: path.relative(s3Path, filePath),
-                Bucket: bucketName,
-                Body: fs.createReadStream(filePath),
-                ContentType
-            })
-            .promise();
+        await s3.putObject({
+            Key: path.relative(s3Path, filePath),
+            Bucket: bucketName,
+            Body: fs.createReadStream(filePath),
+            ContentType
+        });
     }
 }
 
