@@ -1,11 +1,11 @@
 import * as core from '@actions/core';
-import AWS from 'aws-sdk';
 import fs, { Dirent } from 'fs';
 import * as path from 'path';
-import { Object as S3Object } from 'aws-sdk/clients/s3';
 import mime from 'mime-types';
+import { S3 } from '@aws-sdk/client-s3';
 
 const YANDEX_CLOUD_ENDPOINT = 'https://storage.yandexcloud.net';
+const YANDEX_CLOUD_REGION = 'ru-central1-a';
 
 type GithubActionInput = {
     accessKeyId: string;
@@ -25,22 +25,25 @@ const inputs: GithubActionInput = {
     clear: convertStringToBoolean(core.getInput('clear', { required: false }))
 };
 
-const s3 = new AWS.S3({
+const s3 = new S3({
     endpoint: YANDEX_CLOUD_ENDPOINT,
-    accessKeyId: inputs.accessKeyId,
-    secretAccessKey: inputs.secretAccessKey
+    credentials: {
+        accessKeyId: inputs.accessKeyId,
+        secretAccessKey: inputs.secretAccessKey,
+    },
+    region: YANDEX_CLOUD_REGION,
 });
 
 const emptyS3Bucket = async (bucket: string) => {
-    const listedObjects = await s3.listObjects({ Bucket: bucket }).promise();
+    const listedObjects = await s3.listObjects({ Bucket: bucket });
 
     if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
         return;
     }
 
-    const deleteKeys = listedObjects.Contents.map((c: S3Object) => ({ Key: c.Key as string }));
+    const deleteKeys = listedObjects.Contents.map((c) => ({ Key: c.Key as string }));
 
-    await s3.deleteObjects({ Bucket: bucket, Delete: { Objects: deleteKeys } }).promise();
+    await s3.deleteObjects({ Bucket: bucket, Delete: { Objects: deleteKeys } });
 
     if (listedObjects.IsTruncated) {
         await emptyS3Bucket(bucket);
@@ -73,8 +76,7 @@ async function uploadData(s3Path: string, bucketName: string) {
                 Bucket: bucketName,
                 Body: fs.createReadStream(filePath),
                 ContentType
-            })
-            .promise();
+            });
     }
 }
 
